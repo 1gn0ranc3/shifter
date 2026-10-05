@@ -8,6 +8,7 @@
 
 namespace {
 constexpr double kSampleRate = 48'000.0;
+constexpr double kPi         = 3.141592653589793;
 }
 
 TEST_CASE("OnsetDetector: silence produces zero envelope", "[dsp][onset]") {
@@ -32,7 +33,7 @@ TEST_CASE("OnsetDetector: sudden burst triggers envelope", "[dsp][onset]") {
 
     // Introduce an abrupt sinusoidal burst.
     float envDuringBurst = 0.0f;
-    const double w = 2.0 * M_PI * 1'000.0 / kSampleRate;
+    const double w = 2.0 * kPi * 1'000.0 / kSampleRate;
     for (int i = 0; i < 2'000; ++i) {
         const float x = static_cast<float>(std::sin(w * i));
         const float env = od.processSample(x);
@@ -46,7 +47,7 @@ TEST_CASE("OnsetDetector: continuous tone does not retrigger after startup", "[d
     shifter::OnsetDetector od;
     od.prepare(kSampleRate);
 
-    const double w = 2.0 * M_PI * 440.0 / kSampleRate;
+    const double w = 2.0 * kPi * 440.0 / kSampleRate;
 
     // Startup includes the attack of the tone itself. Push through warmup.
     for (int i = 0; i < 15'000; ++i) {
@@ -72,7 +73,7 @@ TEST_CASE("OnsetDetector: envelope decays after onset", "[dsp][onset]") {
     }
 
     // Brief burst.
-    const double w = 2.0 * M_PI * 1'000.0 / kSampleRate;
+    const double w = 2.0 * kPi * 1'000.0 / kSampleRate;
     for (int i = 0; i < 300; ++i) {
         (void)od.processSample(static_cast<float>(std::sin(w * i)));
     }

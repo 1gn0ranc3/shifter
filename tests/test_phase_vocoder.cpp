@@ -9,12 +9,13 @@
 
 namespace {
 
-constexpr int kFftSize   = 1024;
-constexpr int kSampleRate = 48'000;
+constexpr int    kFftSize    = 1024;
+constexpr int    kSampleRate = 48'000;
+constexpr double kPi         = 3.141592653589793;
 
 std::vector<float> makeSinusoid(float freqHz, int numSamples) {
     std::vector<float> out(static_cast<std::size_t>(numSamples));
-    const double w = 2.0 * M_PI * freqHz / static_cast<double>(kSampleRate);
+    const double w = 2.0 * kPi * freqHz / static_cast<double>(kSampleRate);
     for (int i = 0; i < numSamples; ++i) {
         out[static_cast<std::size_t>(i)] = static_cast<float>(std::sin(w * i));
     }
