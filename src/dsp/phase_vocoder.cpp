@@ -22,6 +22,7 @@ PhaseVocoder::PhaseVocoder(int fftSize)
       inputRing_(static_cast<std::size_t>(fftSize), 0.0f),
       outputRing_(static_cast<std::size_t>(fftSize), 0.0f),
       complexBuffer_(static_cast<std::size_t>(fftSize)),
+      ifftScratch_(static_cast<std::size_t>(fftSize)),
       frameOutput_(static_cast<std::size_t>(fftSize), 0.0f),
       lastInputPhase_(static_cast<std::size_t>(numBins_), 0.0f),
       accumulatedOutputPhase_(static_cast<std::size_t>(numBins_), 0.0f),
@@ -134,12 +135,13 @@ void PhaseVocoder::processFrame() noexcept {
         complexBuffer_[k] = std::conj(complexBuffer_[fftSize_ - k]);
     }
 
-    // 6. Inverse FFT. JUCE applies the 1/N scaling for the inverse pass.
-    fft_.perform(complexBuffer_.data(), complexBuffer_.data(), true);
+    // 6. Inverse FFT into a separate buffer (avoid relying on in-place behaviour,
+    // which has shown platform-specific brittleness in JUCE's FFT on MSVC).
+    fft_.perform(complexBuffer_.data(), ifftScratch_.data(), true);
 
     // 7. Window and OLA into the output ring at outputWritePos_.
     for (int k = 0; k < fftSize_; ++k) {
-        frameOutput_[k] = complexBuffer_[k].real() * window_[k];
+        frameOutput_[k] = ifftScratch_[k].real() * window_[k];
     }
 
     for (int k = 0; k < fftSize_; ++k) {

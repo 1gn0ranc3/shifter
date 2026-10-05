@@ -56,6 +56,7 @@ private:
 
     // Scratch (allocated once).
     std::vector<std::complex<float>> complexBuffer_;
+    std::vector<std::complex<float>> ifftScratch_;
     std::vector<float>               frameOutput_;
 
     // Spectral state across frames.
