@@ -3,6 +3,8 @@
 
 add_library(shifter_dsp STATIC
     ring_buffer.h
+    mini_fft.h
+    mini_fft.cpp
     phase_vocoder.h
     phase_vocoder.cpp
     onset_detector.h

@@ -3,7 +3,7 @@
 #include <complex>
 #include <vector>
 
-#include <juce_dsp/juce_dsp.h>
+#include "mini_fft.h"
 
 namespace shifter {
 
@@ -37,7 +37,7 @@ private:
     const int numBins_;
     static constexpr float kTwoPi = 6.28318530717958647692f;
 
-    juce::dsp::FFT fft_;
+    MiniFFT fft_;
 
     std::vector<float> window_;
     float windowGainCorrection_ = 1.0f;
