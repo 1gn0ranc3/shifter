@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <cmath>
+#include <complex>
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <juce_dsp/juce_dsp.h>
 
 #include "phase_vocoder.h"
 
@@ -22,17 +24,39 @@ std::vector<float> makeSinusoid(float freqHz, int numSamples) {
     return out;
 }
 
-// Rough dominant-frequency estimator via zero-crossing rate on a stable segment.
-float estimateFrequencyFromZeroCrossings(const float* samples, int numSamples) {
-    int crossings = 0;
-    for (int i = 1; i < numSamples; ++i) {
-        if ((samples[i - 1] <= 0.0f && samples[i] > 0.0f)
-         || (samples[i - 1] >= 0.0f && samples[i] < 0.0f))
-            ++crossings;
+// Dominant-frequency estimator via FFT peak detection. Robust to HF noise and
+// phase-vocoder ripple, unlike zero-crossing counting.
+float estimateDominantFrequency(const float* samples, int numSamples) {
+    int fftSize = 1;
+    int fftOrder = 0;
+    while (fftSize < numSamples) {
+        fftSize *= 2;
+        ++fftOrder;
     }
-    // Each full cycle has 2 zero crossings.
-    return static_cast<float>(crossings) * 0.5f
-         * static_cast<float>(kSampleRate) / static_cast<float>(numSamples);
+
+    std::vector<std::complex<float>> buf(static_cast<std::size_t>(fftSize),
+                                         std::complex<float>{ 0.0f, 0.0f });
+    for (int i = 0; i < numSamples; ++i) {
+        buf[static_cast<std::size_t>(i)] = { samples[i], 0.0f };
+    }
+
+    juce::dsp::FFT fft(fftOrder);
+    fft.perform(buf.data(), buf.data(), false);
+
+    int peakBin = 1;
+    float peakMag = std::abs(buf[1]);
+    const int halfSize = fftSize / 2;
+    for (int k = 2; k < halfSize; ++k) {
+        const float mag = std::abs(buf[static_cast<std::size_t>(k)]);
+        if (mag > peakMag) {
+            peakMag = mag;
+            peakBin = k;
+        }
+    }
+
+    return static_cast<float>(peakBin)
+         * static_cast<float>(kSampleRate)
+         / static_cast<float>(fftSize);
 }
 
 }  // namespace
@@ -65,7 +89,7 @@ TEST_CASE("PhaseVocoder: identity ratio passes signal through", "[dsp][vocoder]"
     // Skip warmup region, measure dominant frequency on the tail.
     const int tailStart = 3 * kFftSize;
     const int tailLen   = N - tailStart;
-    const float detected = estimateFrequencyFromZeroCrossings(output.data() + tailStart, tailLen);
+    const float detected = estimateDominantFrequency(output.data() + tailStart, tailLen);
 
     REQUIRE_THAT(detected, Catch::Matchers::WithinRel(440.0f, 0.05f));
 }
@@ -84,7 +108,7 @@ TEST_CASE("PhaseVocoder: shift down produces lower frequency", "[dsp][vocoder]")
 
     const int tailStart = 3 * kFftSize;
     const int tailLen   = N - tailStart;
-    const float detected = estimateFrequencyFromZeroCrossings(output.data() + tailStart, tailLen);
+    const float detected = estimateDominantFrequency(output.data() + tailStart, tailLen);
 
     const float expected = 440.0f * ratio;  // ~392 Hz
     REQUIRE_THAT(detected, Catch::Matchers::WithinRel(expected, 0.05f));
