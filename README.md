@@ -1,9 +1,23 @@
 # Shifter
 
+![build](https://github.com/1gn0ranc3/shifter/actions/workflows/build.yml/badge.svg)
+
 Low-latency pitch shifter VST3 plugin for electric guitar.
 
 Personal project targeting 8-string drop tunings with discrete semitone steps (0 to -12).
 Work in progress — currently at milestone **M0 (skeleton)**.
+
+## Download prebuilt binaries
+
+Every push to `main` produces a macOS (arm64) VST3 bundle as a GitHub Actions artifact.
+Grab the latest from the [Actions tab](../../actions/workflows/build.yml) — click the most recent
+successful run, scroll down to **Artifacts**, download `Shifter-macOS-arm64`, unzip, and drop
+`Shifter.vst3` into `~/Library/Audio/Plug-Ins/VST3/`.
+
+Tagged releases (`v*`) are also published to the [Releases page](../../releases).
+
+The plugin is ad-hoc code-signed (no Apple Developer ID). On first use macOS Gatekeeper may
+complain — right-click `Shifter.vst3` → Open, or allow it from System Settings → Privacy & Security.
 
 ## Milestones
 
