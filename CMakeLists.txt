@@ -15,6 +15,7 @@ if(APPLE)
 endif()
 
 option(SHIFTER_BUILD_TESTS "Build unit tests" ON)
+option(SHIFTER_COPY_AFTER_BUILD "Install VST3 into the system plug-in folder after build" ON)
 
 include(FetchContent)
 

@@ -9,15 +9,20 @@ Work in progress — currently at milestone **M0 (skeleton)**.
 
 ## Download prebuilt binaries
 
-Every push to `main` produces a macOS (arm64) VST3 bundle as a GitHub Actions artifact.
-Grab the latest from the [Actions tab](../../actions/workflows/build.yml) — click the most recent
-successful run, scroll down to **Artifacts**, download `Shifter-macOS-arm64`, unzip, and drop
-`Shifter.vst3` into `~/Library/Audio/Plug-Ins/VST3/`.
+Every push to `main` produces VST3 bundles as GitHub Actions artifacts for macOS (arm64)
+and Windows (x64). Grab the latest from the [Actions tab](../../actions/workflows/build.yml):
+pick the most recent successful run and download under **Artifacts**.
 
 Tagged releases (`v*`) are also published to the [Releases page](../../releases).
 
-The plugin is ad-hoc code-signed (no Apple Developer ID). On first use macOS Gatekeeper may
-complain — right-click `Shifter.vst3` → Open, or allow it from System Settings → Privacy & Security.
+### Install
+
+- **macOS**: unzip, drop `Shifter.vst3` into `~/Library/Audio/Plug-Ins/VST3/`.
+  Plugin is ad-hoc code-signed (no Apple Developer ID). Gatekeeper may complain on first use —
+  right-click `Shifter.vst3` → Open, or allow it from System Settings → Privacy & Security.
+- **Windows**: unzip, place `Shifter.vst3` into `C:\Program Files\Common Files\VST3\` (needs
+  admin) or `%LOCALAPPDATA%\Programs\Common\VST3\`. The plugin is unsigned — your DAW may
+  prompt the first time you load it.
 
 ## Milestones
 

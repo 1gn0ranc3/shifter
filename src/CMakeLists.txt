@@ -8,7 +8,7 @@ juce_add_plugin(Shifter
     NEEDS_MIDI_OUTPUT          FALSE
     IS_MIDI_EFFECT             FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS TRUE
-    COPY_PLUGIN_AFTER_BUILD    TRUE
+    COPY_PLUGIN_AFTER_BUILD    ${SHIFTER_COPY_AFTER_BUILD}
     PLUGIN_MANUFACTURER_CODE   Shft
     PLUGIN_CODE                Shf1
     FORMATS                    VST3
