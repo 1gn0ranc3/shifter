@@ -1,0 +1,19 @@
+# Build output
+build/
+cmake-build-*/
+_deps/
+
+# IDE
+.idea/
+.vscode/
+*.user
+
+# macOS
+.DS_Store
+*.dSYM/
+
+# Compile commands symlink
+compile_commands.json
+
+# Local overrides
+CMakeUserPresets.json
