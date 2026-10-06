@@ -152,10 +152,18 @@ void PhaseVocoder::processFrame() noexcept {
         }
     }
 
-    // 5b. Advance peak phases normally; lock non-peak phases to the nearest peak.
+    // 5b. Advance peak phases normally. Bins within a small radius of a peak
+    // (the Hann main-lobe width in bin units) are locked to the peak so the
+    // tonal content stays coherent. Bins outside the radius evolve
+    // independently — collapsing them all onto peaks destroys the stochastic
+    // phase variation that makes sustain sound natural and yields a robotic
+    // vocoder-y tone, which is the trap of overly aggressive phase locking.
+    constexpr int kLockRadius = 3;
+
     for (int k = 0; k < numBins_; ++k) {
         const int peak = nearestPeak_[k];
-        if (peak == k || peak < 0) {
+        const bool inRegion = (peak >= 0) && (std::abs(k - peak) <= kLockRadius);
+        if (peak == k || !inRegion) {
             const float phaseAdvance = outputTrueFreq_[k] * expectedPhaseAdvancePerBin;
             accumulatedOutputPhase_[k] = std::remainder(
                 accumulatedOutputPhase_[k] + phaseAdvance, kTwoPi);
@@ -163,7 +171,8 @@ void PhaseVocoder::processFrame() noexcept {
     }
     for (int k = 0; k < numBins_; ++k) {
         const int peak = nearestPeak_[k];
-        if (peak != k && peak >= 0) {
+        const bool inRegion = (peak >= 0) && (std::abs(k - peak) <= kLockRadius);
+        if (peak != k && inRegion) {
             const float offset = outputPhaseFromInput_[k] - outputPhaseFromInput_[peak];
             accumulatedOutputPhase_[k] = std::remainder(
                 accumulatedOutputPhase_[peak] + offset, kTwoPi);
