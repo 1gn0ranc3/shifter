@@ -28,7 +28,8 @@ Tagged releases (`v*`) are also published to the [Releases page](../../releases)
 
 - **M0** — Skeleton: VST3 loads, pass-through audio, mix knob.
 - **M1** — Baseline shifter: phase vocoder, -2 st hardcoded.
-- **M2** — Transient preservation + 13 shift values + mix/transients controls. ← current
+- **M2** — Transient preservation + 13 shift values (reverted: transients was wrong for pure replacement).
+- **M2.5** — Phase-locked vocoder, 512-sample window (~10.7 ms), shift-only UI. ← current
 - **M3** — Dictionary decomposition + calibration UX.
 - **M4** — Online learning (background thread, EMA, novelty capture).
 - **M5** — Offline retrain.

@@ -27,7 +27,10 @@ PhaseVocoder::PhaseVocoder(int fftSize)
       lastInputPhase_(static_cast<std::size_t>(numBins_), 0.0f),
       accumulatedOutputPhase_(static_cast<std::size_t>(numBins_), 0.0f),
       outputMagnitude_(static_cast<std::size_t>(numBins_), 0.0f),
-      outputTrueFreq_(static_cast<std::size_t>(numBins_), 0.0f)
+      outputTrueFreq_(static_cast<std::size_t>(numBins_), 0.0f),
+      inputPhase_(static_cast<std::size_t>(numBins_), 0.0f),
+      outputPhaseFromInput_(static_cast<std::size_t>(numBins_), 0.0f),
+      nearestPeak_(static_cast<std::size_t>(numBins_), 0)
 {
     // Hann window.
     for (int i = 0; i < fftSize_; ++i) {
@@ -96,33 +99,78 @@ void PhaseVocoder::processFrame() noexcept {
         const float mag   = std::abs(bin);
         const float phase = std::arg(bin);
 
+        inputPhase_[k] = phase;
+
         float phaseDelta = phase - lastInputPhase_[k];
         lastInputPhase_[k] = phase;
 
-        // Subtract expected drift for this bin.
         phaseDelta -= static_cast<float>(k) * expectedPhaseAdvancePerBin;
-
-        // Wrap into [-pi, pi].
         phaseDelta = std::remainder(phaseDelta, kTwoPi);
 
-        // Deviation expressed in bin units.
         const float deviation = phaseDelta / expectedPhaseAdvancePerBin;
         const float trueBin   = static_cast<float>(k) + deviation;
 
-        // Spectral shift: input bin k's content moves to output bin round(k * ratio).
         const int newK = static_cast<int>(std::round(static_cast<float>(k) * ratio));
         if (newK >= 0 && newK < numBins_) {
             outputMagnitude_[newK] += mag;
             outputTrueFreq_[newK]   = trueBin * ratio;
+            // Which input bin ended up here (used by phase locking below).
+            outputPhaseFromInput_[newK] = phase;
         }
     }
 
-    // 5. Synthesis: propagate phase from accumulated frame-to-frame phase.
+    // 5a. Phase-locking (Laroche-Dolson 1999). Find peaks in the output
+    // magnitude spectrum, then collapse non-peak bins' phases to track the
+    // nearest peak with their original relative offset. This keeps whole
+    // "regions of influence" coherent across frames and is the single biggest
+    // win against the metallic / underwater phase-vocoder sound on sustain.
+    float maxMag = 0.0f;
     for (int k = 0; k < numBins_; ++k) {
-        const float phaseAdvance = outputTrueFreq_[k] * expectedPhaseAdvancePerBin;
-        accumulatedOutputPhase_[k] = std::remainder(
-            accumulatedOutputPhase_[k] + phaseAdvance, kTwoPi);
+        if (outputMagnitude_[k] > maxMag) maxMag = outputMagnitude_[k];
+    }
+    const float peakFloor = maxMag * 0.01f;
 
+    int lastPeak = -1;
+    for (int k = 0; k < numBins_; ++k) {
+        const float m  = outputMagnitude_[k];
+        const float ml = (k > 0)              ? outputMagnitude_[k - 1] : 0.0f;
+        const float mr = (k < numBins_ - 1)   ? outputMagnitude_[k + 1] : 0.0f;
+        if (m > peakFloor && m >= ml && m >= mr) lastPeak = k;
+        nearestPeak_[k] = lastPeak;
+    }
+    int nextPeak = -1;
+    for (int k = numBins_ - 1; k >= 0; --k) {
+        const float m  = outputMagnitude_[k];
+        const float ml = (k > 0)              ? outputMagnitude_[k - 1] : 0.0f;
+        const float mr = (k < numBins_ - 1)   ? outputMagnitude_[k + 1] : 0.0f;
+        if (m > peakFloor && m >= ml && m >= mr) nextPeak = k;
+        if (nextPeak >= 0) {
+            const int prev = nearestPeak_[k];
+            if (prev < 0 || (nextPeak - k) < (k - prev)) {
+                nearestPeak_[k] = nextPeak;
+            }
+        }
+    }
+
+    // 5b. Advance peak phases normally; lock non-peak phases to the nearest peak.
+    for (int k = 0; k < numBins_; ++k) {
+        const int peak = nearestPeak_[k];
+        if (peak == k || peak < 0) {
+            const float phaseAdvance = outputTrueFreq_[k] * expectedPhaseAdvancePerBin;
+            accumulatedOutputPhase_[k] = std::remainder(
+                accumulatedOutputPhase_[k] + phaseAdvance, kTwoPi);
+        }
+    }
+    for (int k = 0; k < numBins_; ++k) {
+        const int peak = nearestPeak_[k];
+        if (peak != k && peak >= 0) {
+            const float offset = outputPhaseFromInput_[k] - outputPhaseFromInput_[peak];
+            accumulatedOutputPhase_[k] = std::remainder(
+                accumulatedOutputPhase_[peak] + offset, kTwoPi);
+        }
+    }
+
+    for (int k = 0; k < numBins_; ++k) {
         const float mag = outputMagnitude_[k];
         complexBuffer_[k] = {
             mag * std::cos(accumulatedOutputPhase_[k]),

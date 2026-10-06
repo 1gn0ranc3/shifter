@@ -4,18 +4,12 @@
 #include <vector>
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_dsp/juce_dsp.h>
 
-#include "onset_detector.h"
 #include "phase_vocoder.h"
 
 class ShifterAudioProcessor : public juce::AudioProcessor {
 public:
-    static constexpr int kFftSize       = 1024;
-    // Envelope is delayed by the same amount as dry so both align with the wet
-    // output. A smaller delay (fftSize - hopSize) would pre-trigger the dry
-    // mix-in and reference the wrong portion of the dry signal.
-    static constexpr int kEnvelopeDelay = kFftSize;
+    static constexpr int kFftSize = 512;  // ~10.7 ms at 48 kHz
 
     ShifterAudioProcessor();
     ~ShifterAudioProcessor() override;
@@ -48,21 +42,11 @@ public:
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-    std::atomic<float>* shiftParameter_      = nullptr;
-    std::atomic<float>* transientsParameter_ = nullptr;
+    std::atomic<float>* shiftParameter_ = nullptr;
 
-    int lastAppliedShift_ = 1;  // sentinel: not valid value, forces update on first block
-
-    using NoInterpDelay = juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::None>;
+    int lastAppliedShift_ = 1;  // sentinel outside valid range to force first update
 
     std::vector<std::unique_ptr<shifter::PhaseVocoder>> vocoders_;
-    std::vector<NoInterpDelay> dryDelays_;
-
-    shifter::OnsetDetector onsetDetector_;
-    NoInterpDelay envelopeDelay_ { kEnvelopeDelay + 4 };
-
-    juce::AudioBuffer<float> dryScratch_;
-    std::vector<float>       envelopeScratch_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ShifterAudioProcessor)
 };

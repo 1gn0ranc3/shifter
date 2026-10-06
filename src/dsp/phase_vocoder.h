@@ -65,6 +65,11 @@ private:
     std::vector<float> outputMagnitude_;
     std::vector<float> outputTrueFreq_;
 
+    // Phase-locking (Laroche-Dolson 1999) scratch.
+    std::vector<float> inputPhase_;              // phase of each input bin this frame
+    std::vector<float> outputPhaseFromInput_;    // input phase of the bin that landed here
+    std::vector<int>   nearestPeak_;             // index of nearest output peak for each bin
+
     float pitchRatio_ = 1.0f;
 };
 

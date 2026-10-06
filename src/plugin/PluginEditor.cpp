@@ -6,15 +6,6 @@ const juce::Colour kAccent     { 0xff4ac4d4 };
 const juce::Colour kText       { 0xffe6e6ec };
 const juce::Colour kTextDim    { 0xff6a6a76 };
 
-void styleKnob(juce::Slider& s) {
-    s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    s.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 20);
-    s.setColour(juce::Slider::rotarySliderFillColourId,    kAccent);
-    s.setColour(juce::Slider::rotarySliderOutlineColourId, kTextDim);
-    s.setColour(juce::Slider::textBoxTextColourId,         kText);
-    s.setColour(juce::Slider::textBoxOutlineColourId,      juce::Colours::transparentBlack);
-}
-
 void styleLabel(juce::Label& l, const juce::String& text) {
     l.setText(text, juce::dontSendNotification);
     l.setJustificationType(juce::Justification::centred);
@@ -24,11 +15,10 @@ void styleLabel(juce::Label& l, const juce::String& text) {
 
 ShifterAudioProcessorEditor::ShifterAudioProcessorEditor(ShifterAudioProcessor& p)
     : AudioProcessorEditor(&p),
-      processor_(p),
-      transientsAttachment_(p.parameters, "transients", transientsSlider_)
+      processor_(p)
 {
-    // Items added in ascending-value order so the attached parameter maps
-    // the ComboBox item index straight through: index 0 → -12, index 12 → 0.
+    // Items populated in ascending-value order so the ComboBox item index maps
+    // directly through the AudioParameterInt range: index 0 → -12, index 12 → 0.
     for (int s = -12; s <= 0; ++s) {
         shiftCombo_.addItem(juce::String(s), s + 13);  // IDs 1..13 (-12 → 1, 0 → 13)
     }
@@ -40,15 +30,10 @@ ShifterAudioProcessorEditor::ShifterAudioProcessorEditor(ShifterAudioProcessor& 
     shiftAttachment_ = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
         p.parameters, "shift", shiftCombo_);
 
-    styleLabel(shiftLabel_, "SHIFT (st)");
+    styleLabel(shiftLabel_, "SHIFT (semitones)");
     addAndMakeVisible(shiftLabel_);
 
-    styleKnob(transientsSlider_);
-    addAndMakeVisible(transientsSlider_);
-    styleLabel(transientsLabel_, "TRANSIENTS");
-    addAndMakeVisible(transientsLabel_);
-
-    setSize(340, 280);
+    setSize(320, 180);
 }
 
 ShifterAudioProcessorEditor::~ShifterAudioProcessorEditor() = default;
@@ -66,7 +51,7 @@ void ShifterAudioProcessorEditor::paint(juce::Graphics& g) {
 
     g.setColour(kTextDim);
     g.setFont(juce::FontOptions(10.0f));
-    g.drawText(juce::String::fromUTF8("M2 · transient preserve"),
+    g.drawText(juce::String::fromUTF8("M2.5 · phase-locked, 10.7 ms"),
                bounds.removeFromBottom(20.0f),
                juce::Justification::centred, false);
 }
@@ -76,12 +61,7 @@ void ShifterAudioProcessorEditor::resized() {
     bounds.removeFromTop(44);      // title
     bounds.removeFromBottom(20);   // footer
 
-    auto shiftRow = bounds.removeFromTop(56);
-    shiftLabel_.setBounds(shiftRow.removeFromTop(20));
-    shiftCombo_.setBounds(shiftRow.reduced(40, 0));
-
-    bounds.removeFromTop(10);
-
-    transientsLabel_.setBounds(bounds.removeFromTop(20));
-    transientsSlider_.setBounds(bounds);
+    shiftLabel_.setBounds(bounds.removeFromTop(24));
+    bounds.removeFromTop(8);
+    shiftCombo_.setBounds(bounds.removeFromTop(36).reduced(30, 0));
 }

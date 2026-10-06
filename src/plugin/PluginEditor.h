@@ -21,9 +21,5 @@ private:
     juce::Label    shiftLabel_;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> shiftAttachment_;
 
-    juce::Slider transientsSlider_;
-    juce::Label  transientsLabel_;
-    juce::AudioProcessorValueTreeState::SliderAttachment transientsAttachment_;
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ShifterAudioProcessorEditor)
 };
