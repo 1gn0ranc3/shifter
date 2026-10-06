@@ -24,7 +24,7 @@ ShifterAudioProcessor::createParameterLayout() {
         -12, 0, -2));
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID{"transients", 1}, "Transient Preserve",
-        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 1.0f));
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.5f));
     return { params.begin(), params.end() };
 }
 

@@ -12,7 +12,10 @@
 class ShifterAudioProcessor : public juce::AudioProcessor {
 public:
     static constexpr int kFftSize       = 1024;
-    static constexpr int kEnvelopeDelay = 896;  // fftSize - detector hopSize margin
+    // Envelope is delayed by the same amount as dry so both align with the wet
+    // output. A smaller delay (fftSize - hopSize) would pre-trigger the dry
+    // mix-in and reference the wrong portion of the dry signal.
+    static constexpr int kEnvelopeDelay = kFftSize;
 
     ShifterAudioProcessor();
     ~ShifterAudioProcessor() override;

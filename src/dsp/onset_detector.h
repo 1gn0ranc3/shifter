@@ -21,8 +21,8 @@ public:
         int   historyLen = 80;       // flux history (~215 ms) for threshold stats
         float thresholdK = 3.0f;     // threshold = median + K * MAD
         float minThreshold = 0.15f;  // absolute floor on normalized flux [0, 1]
-        float holdMs     = 5.0f;     // envelope held at 1.0 after onset
-        float releaseMs  = 20.0f;    // exponential decay time constant
+        float holdMs     = 3.0f;     // envelope held at 1.0 after onset
+        float releaseMs  = 10.0f;    // exponential decay time constant
     };
 
     OnsetDetector();

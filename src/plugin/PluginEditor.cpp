@@ -27,7 +27,9 @@ ShifterAudioProcessorEditor::ShifterAudioProcessorEditor(ShifterAudioProcessor& 
       processor_(p),
       transientsAttachment_(p.parameters, "transients", transientsSlider_)
 {
-    for (int s = 0; s >= -12; --s) {
+    // Items added in ascending-value order so the attached parameter maps
+    // the ComboBox item index straight through: index 0 → -12, index 12 → 0.
+    for (int s = -12; s <= 0; ++s) {
         shiftCombo_.addItem(juce::String(s), s + 13);  // IDs 1..13 (-12 → 1, 0 → 13)
     }
     shiftCombo_.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff1a1a22));
