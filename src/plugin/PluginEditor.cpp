@@ -25,7 +25,6 @@ void styleLabel(juce::Label& l, const juce::String& text) {
 ShifterAudioProcessorEditor::ShifterAudioProcessorEditor(ShifterAudioProcessor& p)
     : AudioProcessorEditor(&p),
       processor_(p),
-      mixAttachment_       (p.parameters, "mix",        mixSlider_),
       transientsAttachment_(p.parameters, "transients", transientsSlider_)
 {
     for (int s = 0; s >= -12; --s) {
@@ -42,17 +41,12 @@ ShifterAudioProcessorEditor::ShifterAudioProcessorEditor(ShifterAudioProcessor& 
     styleLabel(shiftLabel_, "SHIFT (st)");
     addAndMakeVisible(shiftLabel_);
 
-    styleKnob(mixSlider_);
-    addAndMakeVisible(mixSlider_);
-    styleLabel(mixLabel_, "MIX");
-    addAndMakeVisible(mixLabel_);
-
     styleKnob(transientsSlider_);
     addAndMakeVisible(transientsSlider_);
     styleLabel(transientsLabel_, "TRANSIENTS");
     addAndMakeVisible(transientsLabel_);
 
-    setSize(420, 300);
+    setSize(340, 280);
 }
 
 ShifterAudioProcessorEditor::~ShifterAudioProcessorEditor() = default;
@@ -80,22 +74,12 @@ void ShifterAudioProcessorEditor::resized() {
     bounds.removeFromTop(44);      // title
     bounds.removeFromBottom(20);   // footer
 
-    // Shift selector row.
     auto shiftRow = bounds.removeFromTop(56);
     shiftLabel_.setBounds(shiftRow.removeFromTop(20));
     shiftCombo_.setBounds(shiftRow.reduced(40, 0));
 
     bounds.removeFromTop(10);
 
-    // Two knobs side by side.
-    auto knobRow = bounds;
-    const int half = knobRow.getWidth() / 2;
-    auto mixArea  = knobRow.removeFromLeft(half);
-    auto transArea = knobRow;
-
-    mixLabel_.setBounds(mixArea.removeFromTop(20));
-    mixSlider_.setBounds(mixArea);
-
-    transientsLabel_.setBounds(transArea.removeFromTop(20));
-    transientsSlider_.setBounds(transArea);
+    transientsLabel_.setBounds(bounds.removeFromTop(20));
+    transientsSlider_.setBounds(bounds);
 }

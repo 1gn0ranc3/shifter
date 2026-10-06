@@ -10,7 +10,6 @@ ShifterAudioProcessor::ShifterAudioProcessor()
           .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr, "Shifter", createParameterLayout())
 {
-    mixParameter_        = parameters.getRawParameterValue("mix");
     shiftParameter_      = parameters.getRawParameterValue("shift");
     transientsParameter_ = parameters.getRawParameterValue("transients");
 }
@@ -20,9 +19,6 @@ ShifterAudioProcessor::~ShifterAudioProcessor() = default;
 juce::AudioProcessorValueTreeState::ParameterLayout
 ShifterAudioProcessor::createParameterLayout() {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID{"mix", 1}, "Mix",
-        juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 1.0f));
     params.push_back(std::make_unique<juce::AudioParameterInt>(
         juce::ParameterID{"shift", 1}, "Shift (semitones)",
         -12, 0, -2));
@@ -82,7 +78,6 @@ void ShifterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
     const int numChannels = buffer.getNumChannels();
     const int numSamples  = buffer.getNumSamples();
-    const float mix          = mixParameter_->load(std::memory_order_relaxed);
     const float transientAmt = transientsParameter_->load(std::memory_order_relaxed);
     const int   shift        = static_cast<int>(shiftParameter_->load(std::memory_order_relaxed));
 
@@ -120,14 +115,17 @@ void ShifterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         const auto* dryIn = dryScratch_.getReadPointer(ch);
         auto* out = buffer.getWritePointer(ch);
 
+        // Output is the wet (shifted) signal. During detected transients, the
+        // delayed dry attack is briefly routed through — scaled by the transients
+        // knob — to preserve pick feel. There is no dry/wet mix knob by design:
+        // the shifter replaces the signal, it does not blend.
         for (int i = 0; i < numSamples; ++i) {
             delay.pushSample(0, dryIn[i]);
             const float dryDelayed = delay.popSample(0);
 
             const float env = envelopeScratch_[static_cast<std::size_t>(i)] * transientAmt;
-            const float effMix = mix * (1.0f - env);
 
-            out[i] = dryDelayed * (1.0f - effMix) + out[i] * effMix;
+            out[i] = out[i] * (1.0f - env) + dryDelayed * env;
         }
     }
 }

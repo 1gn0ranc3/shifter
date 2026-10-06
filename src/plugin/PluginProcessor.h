@@ -45,7 +45,6 @@ public:
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-    std::atomic<float>* mixParameter_        = nullptr;
     std::atomic<float>* shiftParameter_      = nullptr;
     std::atomic<float>* transientsParameter_ = nullptr;
 

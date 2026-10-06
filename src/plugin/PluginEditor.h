@@ -21,10 +21,6 @@ private:
     juce::Label    shiftLabel_;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> shiftAttachment_;
 
-    juce::Slider mixSlider_;
-    juce::Label  mixLabel_;
-    juce::AudioProcessorValueTreeState::SliderAttachment mixAttachment_;
-
     juce::Slider transientsSlider_;
     juce::Label  transientsLabel_;
     juce::AudioProcessorValueTreeState::SliderAttachment transientsAttachment_;
